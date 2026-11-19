@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block section %}{{ "Student report" if invalid_student else "Results Portal" }}{% endblock %}
+{% block content %}
+  <section class="panel empty-state error-page">
+    <span class="empty-icon" aria-hidden="true">!</span>
+    <h1>{{ title }}</h1>
+    <p>{{ message }}</p>
+    {% if invalid_student %}
+      <a class="button primary" href="{{ url_for('students_page') }}">Back to students</a>
+    {% else %}
+      <a class="button primary" href="{{ url_for('home') }}">Go to import</a>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% from "_pagination.html" import pagination %}
+{% block title %}Import results{% endblock %}
+{% block section %}Import results{% endblock %}
+{% block content %}
+  <header class="page-heading">
+    <h1>Import results</h1>
+    <p>Upload a CSV from your spreadsheet and see which student records need attention.</p>
+  </header>
+
+  {% if batch %}
+    <section class="panel results-panel" aria-labelledby="outcome-title">
+      <div class="panel-heading results-heading">
+        <div>
+          <h2 id="outcome-title">{{ "File already processed" if replay else "Import complete" }}</h2>
+          <p class="filename">{{ batch.name }}</p>
+        </div>
+        <div class="action-group">
+          <a class="button secondary" href="{{ url_for('import_page') }}">Import another file</a>
+          <a class="button primary" href="{{ url_for('students_page') }}">View students <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+      {% if replay %}<p class="replay-note">These are the original results for this file. This upload made no changes.</p>{% endif %}
+      <dl class="metrics">
+        <div><dt>Rows read</dt><dd>{{ batch.rows_read|number }}</dd></div>
+        <div class="positive"><dt>Imported</dt><dd>{{ batch.imported|number }}</dd></div>
+        <div class="{{ 'negative' if batch.rejected }}"><dt>Rejected</dt><dd>{{ batch.rejected|number }}</dd></div>
+      </dl>
+    </section>
+
+    {% if batch.errors %}
+      <section class="panel" aria-labelledby="review-title">
+        <div class="panel-heading">
+          <h2 id="review-title">Rows to review</h2>
+          <p>Line numbers refer to the original CSV. After fixing errors, upload the corrected rows.</p>
+        </div>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Rejected rows">
+          <table>
+            <thead><tr><th scope="col">Line</th><th scope="col">Student ID</th><th scope="col">What to fix</th></tr></thead>
+            <tbody>
+              {% for row in batch.errors %}
+                <tr>
+                  <td class="line-number">{{ row.line }}</td>
+                  <td class="identifier">{{ row.student_id or "—" }}</td>
+                  <td><ul class="issues">
+                    {% for issue in row.issues %}
+                      <li><span class="issue-label">{{ issue.label }}</span> {{ issue.message }}</li>
+                    {% endfor %}
+                  </ul></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {{ pagination(batch.rejected, batch.page, batch.page_size, 'import_detail', {'import_id': batch.id, 'replay': 1 if replay else none}) }}
+      </section>
+    {% else %}
+      <p class="notice success">Every student row in this file was imported.</p>
+    {% endif %}
+  {% else %}
+    <div class="import-grid">
+      <section class="panel upload-panel" aria-labelledby="upload-title">
+        <div class="panel-heading">
+          <h2 id="upload-title">Upload a CSV</h2>
+          <p>Choose the file that contains your term results.</p>
+        </div>
+        <form action="{{ url_for('import_page') }}" method="post" enctype="multipart/form-data" data-upload>
+          {% if upload_error %}<p class="notice error" id="upload-error" role="alert">{{ upload_error }}</p>{% endif %}
+          <div class="dropzone" data-dropzone>
+            <span class="upload-icon" aria-hidden="true">⇧</span>
+            <strong>Drop your CSV here</strong>
+            <span class="muted">or choose a file from your device</span>
+            <label class="button secondary picker">
+              <input class="visually-hidden" id="file" name="file" type="file" accept=".csv,text/csv" required aria-describedby="file-limits{% if upload_error %} upload-error{% endif %}">
+              Browse files
+            </label>
+            <p class="file-name" data-file-name aria-live="polite" hidden></p>
+          </div>
+          <div class="upload-actions">
+            <span id="file-limits">CSV UTF-8 · Up to 5 MB and 20,000 rows</span>
+            <button class="button primary" type="submit">Import CSV <span aria-hidden="true">→</span></button>
+          </div>
+          <p class="notice working" data-upload-status role="status" hidden>Uploading and checking student records. This may take a moment.</p>
+        </form>
+      </section>
+
+      <aside class="panel guide" aria-labelledby="guide-title">
+        <span class="guide-icon" aria-hidden="true">▤</span>
+        <h2 id="guide-title">Before you import</h2>
+        <ul class="checklist">
+          <li>Put the column names on line 1.</li>
+          <li>Use a unique student ID for each student.</li>
+          <li>Enter all five subject marks as numbers from 0 to 100.</li>
+        </ul>
+        <details>
+          <summary>Required columns</summary>
+          <ul class="columns">
+            {% for column in columns %}<li><code>{{ column }}</code></li>{% endfor %}
+          </ul>
+        </details>
+        <p class="guide-note">Valid rows are saved. You’ll get a line-by-line list of any rows that need fixing.</p>
+      </aside>
+    </div>
+  {% endif %}
+{% endblock %}

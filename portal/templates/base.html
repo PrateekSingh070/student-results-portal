@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>{% block title %}{% endblock %} · Results Portal</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='portal.css') }}">
+  <script src="{{ url_for('static', filename='portal.js') }}" defer></script>
+</head>
+<body>
+  {% set in_import = request.endpoint in ('import_page', 'import_detail') %}
+  {% set in_students = request.endpoint in ('students_page', 'student_page') or invalid_student %}
+  <a class="skip-link" href="#main">Skip to content</a>
+  <aside class="sidebar">
+    <a class="brand" href="{{ url_for('home') }}">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span>Results Portal</span>
+    </a>
+    <nav aria-label="Main navigation">
+      <a href="{{ url_for('import_page') }}" {% if in_import %}aria-current="page"{% endif %}><span aria-hidden="true" class="nav-icon">⇧</span> Import results</a>
+      <a href="{{ url_for('students_page') }}" {% if in_students %}aria-current="{{ 'page' if request.endpoint == 'students_page' else 'location' }}"{% endif %}><span aria-hidden="true" class="nav-icon">▤</span> Students</a>
+    </nav>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <span>Academics</span>
+      <span aria-hidden="true" class="divider">/</span>
+      <span>{% block section %}{% endblock %}</span>
+    </header>
+    <main id="main" tabindex="-1" class="content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

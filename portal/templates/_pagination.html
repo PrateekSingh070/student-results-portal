@@ -1,0 +1,23 @@
+{% macro pagination(total, page, size, endpoint, params) %}
+  {% if total %}
+    {% set pages = (total + size - 1) // size %}
+    <div class="pagination">
+      <span>Showing {{ ((page - 1) * size + 1)|number }}–{{ [page * size, total]|min|number }} of {{ total|number }}</span>
+      {% if pages > 1 %}
+        <nav aria-label="Pagination">
+          {% if page > 1 %}
+            <a class="button secondary small" rel="prev" href="{{ url_for(endpoint, page=page-1, **params) }}">Previous</a>
+          {% else %}
+            <span class="button secondary small unavailable" aria-disabled="true">Previous</span>
+          {% endif %}
+          <span class="page-count">{{ page }} / {{ pages }}</span>
+          {% if page < pages %}
+            <a class="button secondary small" rel="next" href="{{ url_for(endpoint, page=page+1, **params) }}">Next</a>
+          {% else %}
+            <span class="button secondary small unavailable" aria-disabled="true">Next</span>
+          {% endif %}
+        </nav>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endmacro %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ student.full_name }}{% endblock %}
+{% block section %}Student report{% endblock %}
+{% block content %}
+  <a class="back-link" href="{{ url_for('students_page', q=return_query or none, page=return_page if return_page > 1 else none) }}"><span aria-hidden="true">←</span> Back to students</a>
+  <header class="page-heading">
+    <h1>{{ student.full_name }}</h1>
+    <p>Student report <span aria-hidden="true">·</span> {{ student.student_id }}</p>
+  </header>
+
+  <section class="panel report-summary" aria-labelledby="summary-title">
+    <div class="panel-heading"><h2 id="summary-title">Overall result</h2></div>
+    <dl class="metrics report-metrics">
+      <div><dt>Total marks</dt><dd>{{ report.total|number }} <span>/ {{ report.maximum }}</span></dd></div>
+      <div><dt>Percentage</dt><dd>{{ report.percentage|number }}<span>%</span></dd></div>
+      <div><dt>Grade</dt><dd>{{ report.grade }}</dd></div>
+      <div><dt>Status</dt><dd><span class="badge {{ 'pass' if report.passed else 'fail' }}">{{ "Passed" if report.passed else "Failed" }}</span></dd></div>
+    </dl>
+  </section>
+
+  <div class="report-grid">
+    <section class="panel" aria-labelledby="marks-title">
+      <div class="panel-heading"><h2 id="marks-title">Subject marks</h2><p>Each subject is marked out of 100.</p></div>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Subject marks">
+        <table class="marks-table">
+          <thead><tr><th scope="col">Subject</th><th scope="col">Marks</th><th scope="col">Result</th></tr></thead>
+          <tbody>
+            {% for subject in report.subjects %}
+              <tr><th scope="row">{{ subject.name }}</th><td>{{ subject.mark|number }}</td><td><span class="badge {{ 'pass' if subject.passed else 'fail' }}">{{ "Pass" if subject.passed else "Fail" }}</span></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <details class="grading">
+        <summary>Grading scheme</summary>
+        <p>Pass all five subjects with at least {{ pass_mark }} marks each. Any failed subject makes the overall grade F.</p>
+        <p>For a passing report, the grade follows these overall percentage thresholds.</p>
+        <dl class="grade-bands">{% for minimum, grade in bands %}<div><dt>{{ grade }}</dt><dd>≥ {{ minimum }}%</dd></div>{% endfor %}</dl>
+      </details>
+    </section>
+
+    <section class="panel details-panel" aria-labelledby="details-title">
+      <div class="panel-heading"><h2 id="details-title">Student details</h2></div>
+      <dl class="student-details">
+        <div><dt>Student ID</dt><dd class="identifier">{{ student.student_id }}</dd></div>
+        <div><dt>Email</dt><dd>{{ student.email }}</dd></div>
+        <div><dt>Date of birth</dt><dd><time datetime="{{ student.date_of_birth }}">{{ student.date_of_birth }}</time></dd></div>
+        <div><dt>Grade level</dt><dd>{{ student.grade_level }}</dd></div>
+        <div><dt>Section</dt><dd>{{ student.section }}</dd></div>
+      </dl>
+    </section>
+  </div>
+{% endblock %}

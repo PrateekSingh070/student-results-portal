@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_pagination.html" import pagination %}
+{% block title %}Students{% endblock %}
+{% block section %}Students{% endblock %}
+{% block content %}
+  <header class="page-heading heading-with-action">
+    <div><h1>Students</h1><p>Find an imported student and open their results report.</p></div>
+    <a class="button secondary" href="{{ url_for('import_page') }}">Import results <span aria-hidden="true">→</span></a>
+  </header>
+
+  <section class="panel" aria-labelledby="directory-title">
+    <div class="panel-heading directory-heading">
+      <div>
+        <h2 id="directory-title">Student directory</h2>
+        <p>{{ total|number }} {{ "match" if total == 1 and query else "matches" if query else "student" if total == 1 else "students" }}</p>
+      </div>
+      <form class="search" role="search" action="{{ url_for('students_page') }}" method="get">
+        <label class="visually-hidden" for="query">Search by name or student ID</label>
+        <input id="query" name="q" type="search" value="{{ query }}" placeholder="Name or student ID" maxlength="100">
+        <button class="button primary" type="submit">Search</button>
+        {% if query %}<a class="clear-search" href="{{ url_for('students_page') }}">Clear</a>{% endif %}
+      </form>
+    </div>
+    {% if students %}
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Student directory">
+        <table>
+          <thead><tr><th scope="col">Student</th><th scope="col">Student ID</th><th scope="col">Grade level</th><th scope="col">Section</th><th scope="col">Report</th></tr></thead>
+          <tbody>
+            {% for student in students %}
+              <tr>
+                <th scope="row"><span class="student-name">{{ student.full_name }}</span><span class="student-email">{{ student.email }}</span></th>
+                <td class="identifier">{{ student.student_id }}</td>
+                <td>{{ student.grade_level }}</td>
+                <td><span class="section-badge">{{ student.section }}</span></td>
+                <td><a class="report-link" href="{{ url_for('student_page', student_id=student.student_id, q=query or none, page=page if page > 1 else none) }}" aria-label="View report for {{ student.full_name }} ({{ student.student_id }})">View report <span aria-hidden="true">↗</span></a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {{ pagination(total, page, page_size, 'students_page', {'q': query or none}) }}
+    {% elif query %}
+      <div class="empty-state">
+        <span class="empty-icon" aria-hidden="true">⌕</span>
+        <h3>No students found</h3>
+        <p>Try a different name or student ID.</p>
+        <a class="button secondary" href="{{ url_for('students_page') }}">Clear search</a>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <span class="empty-icon" aria-hidden="true">▤</span>
+        <h3>No students yet</h3>
+        <p>Import your first results file to populate the directory.</p>
+        <a class="button primary" href="{{ url_for('import_page') }}">Import a CSV</a>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}
