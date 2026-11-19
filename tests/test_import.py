@@ -185,6 +185,49 @@ class PortalTests(unittest.TestCase):
         self.assertEqual([row["Field"] for row in rows[-2:]], ["Full name", "Email"])
         self.assertEqual(self.client.get("/import/999/errors.csv").status_code, 404)
 
+    def test_large_messy_upload_matches_expected_counts_and_physical_lines(self):
+        stream = io.StringIO(newline="")
+        writer = csv.writer(stream)
+        writer.writerow(COLUMNS)
+        cases = {
+            11: "INVALID_FORMAT", 27: "OUT_OF_RANGE", 41: "MISSING_REQUIRED",
+            42: "DUPLICATE_ID", 63: "WRONG_FIELD_COUNT", 80: "INVALID_FORMAT",
+        }
+        for block in range(50):
+            writer.writerow([])
+            for index in range(100):
+                row = changed(self.row, student_id=f"QA-{block:02}-{index:02}")
+                if index == 11:
+                    row[2] = "bad..mail@school.example"
+                elif index == 27:
+                    row[6] = "100.0001"
+                elif index == 41:
+                    row[7] = ""
+                elif index == 42:
+                    row[0] = f"qa-{block:02}-41"
+                elif index == 63:
+                    row.pop()
+                elif index == 80:
+                    stream.write(f'QA-{block:02}-80,"unfinished\r\n')
+                    continue
+                elif index == 93:
+                    row[1] = "Íñiguez,\r\nMarisol"
+                writer.writerow(row)
+
+        result = self.upload(stream.getvalue().encode("utf-8-sig"))
+        self.assertEqual(result.status_code, 201)
+        stats = result.json
+        self.assertEqual((stats["rows_read"], stats["imported"], stats["rejected"]), (5000, 4700, 300))
+        exported = self.client.get(f"/import/{stats['id']}/errors.csv").data.decode("utf-8-sig")
+        errors = list(csv.DictReader(io.StringIO(exported)))
+        self.assertEqual(len(errors), 300)
+        # Every block starts with a blank line and ends with one quoted field
+        # spanning two physical lines, after every expected rejection.
+        expected = {3 + block * 102 + offset: code for block in range(50) for offset, code in cases.items()}
+        self.assertEqual({int(row["Line"]): row["Code"] for row in errors}, expected)
+        found = self.client.get("/api/students/QA-49-93").json
+        self.assertEqual(found["student"]["full_name"], "Íñiguez, Marisol")
+
     def test_concurrent_retries_commit_once(self):
         payload = csv_bytes(self.row)
         with ThreadPoolExecutor(max_workers=2) as pool:

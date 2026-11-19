@@ -26,6 +26,8 @@ The app listens at [http://localhost:8080](http://localhost:8080) and stores res
 python -m unittest discover -s tests -v
 ```
 
+The suite generates a 5,000-row CSV in memory and checks all 300 expected rejection codes and physical line numbers. GitHub Actions runs the tests and builds the Docker image, then checks that the seeded app returns the expected import summary.
+
 ## Generate demo data
 
 ```sh

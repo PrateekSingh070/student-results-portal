@@ -1,0 +1,36 @@
+name: Portal checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Run tests
+        run: |
+          python -m pip install -r requirements.txt
+          python -m unittest discover -s tests -v
+      - name: Build and test the Docker image
+        shell: bash
+        run: |
+          docker build -t student-results-portal:ci .
+          docker run --detach --name portal-smoke --publish 127.0.0.1:8080:8080 student-results-portal:ci
+          trap 'docker logs portal-smoke; docker rm -f portal-smoke >/dev/null' EXIT
+          curl --fail --silent --show-error --retry 10 --retry-all-errors --retry-delay 1 --max-time 3 http://127.0.0.1:8080/import > /dev/null
+          docker exec portal-smoke python seed.py --rows 80 --output /data/demo.csv --load
+          curl --fail --silent --show-error http://127.0.0.1:8080/api/imports/1 |
+            python -c 'import json, sys; r = json.load(sys.stdin); assert (r["rows_read"], r["imported"], r["rejected"]) == (80, 73, 7), r'
