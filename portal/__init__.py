@@ -1,10 +1,12 @@
 """Student Results Portal application and HTTP routes."""
 
+import csv
+import io
 import os
 import sqlite3
 from pathlib import Path
 
-from flask import Flask, abort, jsonify, redirect, render_template, request, url_for
+from flask import Flask, Response, abort, jsonify, redirect, render_template, request, url_for
 from werkzeug.exceptions import BadRequest, RequestEntityTooLarge
 
 from . import database
@@ -91,6 +93,29 @@ def create_app(config=None):
             "import.html", columns=COLUMNS, batch=read_import(import_id),
             replay=request.args.get("replay") == "1",
         )
+
+    @app.get("/import/<int:import_id>/errors.csv")
+    def export_import_errors(import_id):
+        read_import(import_id)
+
+        def lines():
+            buffer = io.StringIO(newline="")
+            writer = csv.writer(buffer)
+            writer.writerow(("Line", "Student ID", "Field", "Code", "What to fix"))
+            yield "\ufeff" + buffer.getvalue()
+            for line, student_id, issues in database.stream_rejections(db, import_id):
+                student_id = student_id or ""
+                if student_id.startswith("-"):
+                    student_id = "'" + student_id
+                buffer.seek(0)
+                buffer.truncate()
+                for issue in issues:
+                    writer.writerow((line, student_id, issue["label"], issue["code"], issue["message"]))
+                yield buffer.getvalue()
+
+        return Response(lines(), mimetype="text/csv", headers={
+            "Content-Disposition": f'attachment; filename="import-{import_id}-errors.csv"',
+        })
 
     @app.get("/students")
     def students_page():

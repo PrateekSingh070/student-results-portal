@@ -16,9 +16,9 @@ VALID = ["s-101", " Müller   O'Neil, Ana ", " ANA@EXAMPLE.EDU ", "19/11/2014",
          "09", " b ", "76.2", "65", "90", "82.0", "72"]
 
 
-def csv_bytes(*rows, header=COLUMNS, bom=False):
+def csv_bytes(*rows, header=COLUMNS, bom=False, delimiter=","):
     stream = io.StringIO(newline="")
-    csv.writer(stream).writerows([header, *rows])
+    csv.writer(stream, delimiter=delimiter).writerows([header, *rows])
     return stream.getvalue().encode("utf-8-sig" if bom else "utf-8")
 
 
@@ -37,6 +37,18 @@ class ParserTests(unittest.TestCase):
             "maths": "76.2", "science": "65", "english": "90",
             "social_studies": "82.0", "second_language": "72",
         })
+
+    def test_semicolon_and_tab_exports_keep_quoted_values_and_extra_columns(self):
+        header = (*COLUMNS, "teacher_note")
+        for delimiter in (";", "\t"):
+            with self.subTest(delimiter=delimiter):
+                row = [*VALID, f"term{delimiter}comment"]
+                payload = csv_bytes([], row, header=header, bom=True, delimiter=delimiter)
+                parsed, = parse_csv(payload, TODAY)
+                self.assertEqual(parsed.line, 3)
+                self.assertEqual(parsed.issues, [])
+                self.assertEqual(parsed.values["full_name"], "Müller O'Neil, Ana")
+                self.assertNotIn("teacher_note", parsed.values)
 
     def test_physical_line_numbers_count_blank_and_multiline_records(self):
         multiline = changed(VALID, full_name="Müller,\r\nAna")
@@ -156,6 +168,22 @@ class PortalTests(unittest.TestCase):
         self.assertEqual((response.json["imported"], response.json["rejected"]), (0, 30))
         page = self.client.get(response.headers["Location"] + "?page=2").json
         self.assertEqual([row["line"] for row in page["errors"]], list(range(27, 32)))
+
+    def test_error_export_includes_every_page_and_one_record_per_issue(self):
+        failures = [changed(self.row, student_id=f"BAD-{i:03}", maths="") for i in range(26)]
+        failures.append(changed(self.row, student_id="-1-2", full_name="", email="bad"))
+        result = self.upload(csv_bytes(*failures))
+        response = self.client.get(f"/import/{result.json['id']}/errors.csv")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.mimetype, "text/csv")
+        self.assertEqual(response.headers["Content-Disposition"], 'attachment; filename="import-1-errors.csv"')
+        rows = list(csv.DictReader(io.StringIO(response.data.decode("utf-8-sig"))))
+        self.assertEqual(len(rows), 28)
+        self.assertEqual([row["Line"] for row in rows], [str(i) for i in range(2, 29)] + ["28"])
+        self.assertEqual([row["Student ID"] for row in rows[-2:]], ["'-1-2", "'-1-2"])
+        self.assertEqual([row["Code"] for row in rows[-2:]], ["MISSING_REQUIRED", "INVALID_FORMAT"])
+        self.assertEqual([row["Field"] for row in rows[-2:]], ["Full name", "Email"])
+        self.assertEqual(self.client.get("/import/999/errors.csv").status_code, 404)
 
     def test_concurrent_retries_commit_once(self):
         payload = csv_bytes(self.row)

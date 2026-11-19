@@ -30,9 +30,12 @@
 
     {% if batch.errors %}
       <section class="panel" aria-labelledby="review-title">
-        <div class="panel-heading">
-          <h2 id="review-title">Rows to review</h2>
-          <p>Line numbers refer to the original CSV. After fixing errors, upload the corrected rows.</p>
+        <div class="panel-heading results-heading">
+          <div>
+            <h2 id="review-title">Rows to review</h2>
+            <p>Line numbers refer to the original CSV. After fixing errors, upload the corrected rows.</p>
+          </div>
+          <a class="button secondary" href="{{ url_for('export_import_errors', import_id=batch.id) }}">Download error report <span aria-hidden="true">↓</span></a>
         </div>
         <div class="table-scroll" tabindex="0" role="region" aria-label="Rejected rows">
           <table>
@@ -88,7 +91,7 @@
         <span class="guide-icon" aria-hidden="true">▤</span>
         <h2 id="guide-title">Before you import</h2>
         <ul class="checklist">
-          <li>Put the column names on line 1.</li>
+          <li>Put the column names on line 1. Comma, semicolon, and tab delimiters are supported.</li>
           <li>Use a unique student ID for each student.</li>
           <li>Enter all five subject marks as numbers from 0 to 100.</li>
         </ul>

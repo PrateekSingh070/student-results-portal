@@ -154,10 +154,7 @@ def parse_csv(payload, today=None):
 
     today = today or date.today()
     stream = io.StringIO(content, newline="")
-    try:
-        header = [value.strip().lower() for value in next(csv.reader(islice(stream, 1), strict=True), [])]
-    except csv.Error as error:
-        raise FileProblem("The header on line 1 could not be read. Check its quotes and column names.") from error
+    header, delimiter = read_header(stream.readline())
     if not any(header):
         raise FileProblem("The CSV is empty or has no header. Add the column names on line 1.")
     missing = [field for field in COLUMNS if field not in header]
@@ -173,7 +170,7 @@ def parse_csv(payload, today=None):
     while True:
         line = next_line
         start = stream.tell()
-        reader = csv.reader(islice(stream, MAX_RECORD_LINES), strict=True)
+        reader = csv.reader(islice(stream, MAX_RECORD_LINES), delimiter=delimiter, strict=True, skipinitialspace=True)
         try:
             record = next(reader, None)
         except csv.Error:
@@ -196,6 +193,25 @@ def parse_csv(payload, today=None):
     if not rows:
         raise FileProblem("The CSV contains a header but no student rows.")
     return rows
+
+
+def read_header(line):
+    candidates = []
+    required = set(COLUMNS)
+    for delimiter in (",", ";", "\t"):
+        try:
+            record = next(csv.reader([line], delimiter=delimiter, strict=True, skipinitialspace=True))
+        except csv.Error:
+            continue
+        header = [field.strip().lower() for field in record]
+        matched = len(required.intersection(header))
+        if matched == len(required):
+            return header, delimiter
+        candidates.append((matched, header, delimiter))
+    if not candidates:
+        raise FileProblem("The header on line 1 could not be read. Check its quotes and column names.")
+    _, header, delimiter = max(candidates, key=lambda candidate: candidate[0])
+    return header, delimiter
 
 
 def validate_record(record, column_count, positions, line, seen, today):

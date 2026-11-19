@@ -38,14 +38,14 @@ The generator includes quoted names, Unicode, whitespace, mixed date formats and
 
 ## CSV format and grading
 
-Use a comma-separated UTF-8 file with these required columns. The order and case of the column names can vary, and extra columns are ignored.
+Use a UTF-8 `.csv` file with these required columns. Comma, semicolon and tab delimiters are supported. The order and case of the column names can vary, and extra columns are ignored.
 
 ```csv
 student_id,full_name,email,date_of_birth,grade_level,section,maths,science,english,social_studies,second_language
 DEMO-90001,"Iyer, Meera",meera@school.example,14/03/2014,07,B,83.5,77,88,91,76
 ```
 
-The maximum is 5 MiB and 20,000 nonblank data rows. Blank records do not count. When correcting rejected records, upload the corrected rows in a new CSV. IDs in the directory are preserved. Re-uploading identical file bytes opens the original summary.
+The maximum is 5 MiB and 20,000 nonblank data rows. Blank records do not count. Use **Download error report** to review all flagged cells against the original spreadsheet, then upload the corrected rows in a new CSV. IDs in the directory are preserved. Re-uploading identical file bytes opens the original summary.
 
 The five subjects are each out of 100, for a maximum of 500. Percentage is the total divided by five. Pass requires at least 35 in **each** subject. F applies whenever a subject is failed. For a passing report, the percentage bands are A+ ≥90, A ≥80, B ≥70, C ≥60, D ≥50 and E ≥35. The exact decimal values determine the grade.
 

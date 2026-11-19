@@ -131,6 +131,17 @@ def get_import(path, import_id, page, size):
         }
 
 
+def stream_rejections(path, import_id):
+    with closing(connect(path)) as connection:
+        rows = connection.execute(
+            """SELECT line, student_id, issues FROM import_rejections
+               WHERE import_id = ? ORDER BY line""",
+            (import_id,),
+        )
+        for row in rows:
+            yield row["line"], row["student_id"], json.loads(row["issues"])
+
+
 def list_students(path, query, page, size):
     where = "WHERE instr(search_name, ?) OR instr(student_id, ?)" if query else ""
     params = (query.casefold(), query.upper()) if query else ()
