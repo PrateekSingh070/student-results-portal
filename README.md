@@ -1,6 +1,6 @@
 # Student Results Portal
 
-Import a spreadsheet export, review rejected rows by CSV line number, and open an individual student’s report. Search the directory by name or ID. The directory and rejection list show 25 records per page.
+Import a spreadsheet export, review rejected rows by CSV line number, and open an individual student’s report. Import history links back to each completed batch. Search the directory by name or ID and select a student’s name to open their report. The directory and rejection list show 25 records per page.
 
 ## Run with Docker
 
@@ -38,7 +38,7 @@ The generator includes quoted names, Unicode, whitespace, mixed date formats and
 
 ## CSV format and grading
 
-Use a UTF-8 `.csv` file with these required columns. Comma, semicolon and tab delimiters are supported. The order and case of the column names can vary, and extra columns are ignored.
+Use **Download CSV template** on the import screen to start a spreadsheet with the required columns. Save it as a UTF-8 `.csv` file. Comma, semicolon and tab delimiters are supported. The order and case of the column names can vary, and extra columns are ignored.
 
 ```csv
 student_id,full_name,email,date_of_birth,grade_level,section,maths,science,english,social_studies,second_language

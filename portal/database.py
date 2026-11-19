@@ -131,6 +131,19 @@ def get_import(path, import_id, page, size):
         }
 
 
+def list_imports(path, page, size):
+    with closing(connect(path)) as connection, connection:
+        connection.execute("BEGIN")
+        total = connection.execute("SELECT COUNT(*) FROM imports").fetchone()[0]
+        page = min(page, max(1, (total + size - 1) // size))
+        rows = connection.execute(
+            """SELECT id, name, rows_read, imported, rejected FROM imports
+               ORDER BY id DESC LIMIT ? OFFSET ?""",
+            (size, (page - 1) * size),
+        ).fetchall()
+    return {"batches": [dict(row) for row in rows], "total": total, "page": page, "page_size": size}
+
+
 def stream_rejections(path, import_id):
     with closing(connect(path)) as connection:
         rows = connection.execute(

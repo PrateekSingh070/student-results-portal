@@ -133,7 +133,8 @@ button:disabled { opacity: .65; cursor: wait; }
 summary { cursor: pointer; font-weight: 650; color: var(--green-dark); }
 .columns { display: grid; gap: 4px; list-style: none; padding: 0 0 0 14px; margin: 9px 0 0; }
 .columns code { font-size: .85rem; }
-.guide-note { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: .9rem; }
+.template-link { margin-top: 15px; }
+.history-panel { margin-top: 22px; }
 .notice { border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px; }
 .notice.error { margin-bottom: 12px; background: var(--red-soft); color: var(--red); border-color: #ecd0c7; }
 .notice.working { margin-top: 13px; background: var(--green-soft); color: var(--green-dark); }
@@ -176,8 +177,8 @@ tbody tr:hover { background: #f9faf6; }
 .student-name { min-width: 150px; }
 .student-email { font-size: .85rem; font-weight: 400; color: var(--muted); margin-top: 2px; }
 .section-badge { display: inline-grid; min-width: 27px; min-height: 27px; place-items: center; border-radius: 6px; background: #edf1e8; font-weight: 650; }
-.report-link, .back-link { color: var(--green); font-weight: 650; text-underline-offset: 3px; }
-.report-link { white-space: nowrap; }
+.record-link, .back-link { color: var(--green); font-weight: 650; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.record-link:hover, .back-link:hover { color: var(--green-dark); }
 
 .empty-state { display: grid; justify-items: center; gap: 11px; text-align: center; padding: 52px 24px; border-top: 1px solid var(--border); }
 .empty-state p { color: var(--muted); }
@@ -225,8 +226,17 @@ tbody tr:hover { background: #f9faf6; }
   th:first-child, td:first-child { padding-left: 16px; }
   th:last-child, td:last-child { padding-right: 16px; }
   .metrics, .replay-note { margin-inline: 16px; }
+  .search { display: grid; grid-template-columns: minmax(0, 1fr) auto; width: 100%; }
+  .search input { width: 100%; }
+  .clear-search { justify-self: start; }
+  .directory-table, .history-table { table-layout: fixed; }
+  .directory-table :is(th, td), .history-table :is(th, td) { padding-inline: 7px; }
+  .directory-table :is(th, td):first-child, .history-table :is(th, td):first-child { width: 41%; padding-inline-start: 12px; }
+  .directory-table :is(th, td):nth-child(2) { width: 26%; }
+  .directory-table thead th, .history-table thead th { white-space: normal; overflow-wrap: anywhere; }
+  .directory-table .identifier { white-space: normal; overflow-wrap: anywhere; }
+  .student-name { min-width: 0; }
 }
 @media (max-width: 365px) {
-  .search input { flex: 1 1 100%; }
   .marks-table { font-size: .9rem; }
 }

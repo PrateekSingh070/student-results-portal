@@ -14,6 +14,7 @@ from .importer import COLUMNS, MAX_BYTES, FileProblem
 from .report import GRADE_BANDS, PASS_MARK, calculate_report
 
 PAGE_SIZE = 25
+HISTORY_PAGE_SIZE = 8
 
 
 def create_app(config=None):
@@ -55,6 +56,10 @@ def create_app(config=None):
             abort(404)
         return batch
 
+    def upload_screen(upload_error=None):
+        history = database.list_imports(db, page_number(), HISTORY_PAGE_SIZE)
+        return render_template("import.html", columns=COLUMNS, history=history, upload_error=upload_error)
+
     def search():
         query = " ".join(request.args.get("q", "")[:100].split())
         return query, database.list_students(db, query, page_number(), PAGE_SIZE)
@@ -83,9 +88,17 @@ def create_app(config=None):
             try:
                 import_id, replay = upload()
             except FileProblem as error:
-                return render_template("import.html", columns=COLUMNS, upload_error=str(error)), error.status
+                return upload_screen(str(error)), error.status
             return redirect(url_for("import_detail", import_id=import_id, replay=1 if replay else None), 303)
-        return render_template("import.html", columns=COLUMNS)
+        return upload_screen()
+
+    @app.get("/import/template.csv")
+    def download_template():
+        output = io.StringIO(newline="")
+        csv.writer(output).writerow(COLUMNS)
+        return Response("\ufeff" + output.getvalue(), mimetype="text/csv", headers={
+            "Content-Disposition": 'attachment; filename="student-results-template.csv"',
+        })
 
     @app.get("/import/<int:import_id>")
     def import_detail(import_id):

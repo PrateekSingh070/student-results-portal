@@ -214,3 +214,26 @@ class PortalTests(unittest.TestCase):
         report = self.client.get("/students/S-101").get_data(as_text=True)
         self.assertIn("Grading scheme", report)
         self.assertIn("Passed", report)
+
+    def test_import_history_links_to_original_results_without_listing_replays(self):
+        for index in range(9):
+            payload = csv_bytes(changed(self.row, student_id=f"HIST-{index}"))
+            self.assertEqual(self.upload(payload, f"batch-{index}.csv").status_code, 201)
+        self.assertTrue(self.upload(payload, "duplicate.csv").json["replayed"])
+
+        latest = self.client.get("/import").get_data(as_text=True)
+        self.assertIn("Showing 1–8 of 9", latest)
+        self.assertIn('href="/import/9">batch-8.csv</a>', latest)
+        self.assertNotIn("batch-0.csv", latest)
+        self.assertNotIn("duplicate.csv", latest)
+        oldest = self.client.get("/import?page=2").get_data(as_text=True)
+        self.assertIn("Showing 9–9 of 9", oldest)
+        self.assertIn('href="/import/1">batch-0.csv</a>', oldest)
+
+    def test_csv_template_download_matches_required_columns(self):
+        response = self.client.get("/import/template.csv")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.mimetype, "text/csv")
+        self.assertIn('filename="student-results-template.csv"', response.headers["Content-Disposition"])
+        rows = list(csv.reader(io.StringIO(response.data.decode("utf-8-sig"))))
+        self.assertEqual(rows, [list(COLUMNS)])
