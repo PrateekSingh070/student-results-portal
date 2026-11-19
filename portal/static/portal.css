@@ -191,7 +191,7 @@ tbody tr:hover { background: #f9faf6; }
 .pass { background: var(--green-soft); color: var(--green-dark); }
 .fail { background: var(--red-soft); color: var(--red); }
 .marks-table { table-layout: fixed; }
-.marks-table :first-child { width: 47%; }
+.marks-table tr > :first-child { width: 47%; }
 .marks-table th, .marks-table td { overflow-wrap: anywhere; }
 .student-details { padding: 0 24px 12px; }
 .student-details div { border-top: 1px solid var(--border); padding: 11px 0; }
